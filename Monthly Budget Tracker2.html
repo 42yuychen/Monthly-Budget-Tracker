@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Monthly Budget Tracker</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --danger: #dc2626;
+      --success: #16a34a;
+      --warning: #d97706;
+      --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+      color: var(--text);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .header {
+      margin-bottom: 20px;
+    }
+
+    .header h1 {
+      margin: 0 0 8px;
+      font-size: 2rem;
+    }
+
+    .header p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+    }
+
+    .card h2 {
+      margin-top: 0;
+      font-size: 1.2rem;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .summary-box {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .summary-box .label {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+    }
+
+    .summary-box .value {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .success { color: var(--success); }
+    .danger { color: var(--danger); }
+    .warning { color: var(--warning); }
+
+    .budget-form,
+    .expense-form {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .budget-form input,
+    .expense-form input,
+    .expense-form select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 0.95rem;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+
+    .btn-primary {
+      background: #2563eb;
+      color: white;
+    }
+
+    .btn-secondary {
+      background: #0f172a;
+      color: white;
+    }
+
+    .btn-danger {
+      background: #ef4444;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 620px;
+      background: white;
+    }
+
+    th, td {
+      padding: 12px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      background: #f8fafc;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .alert {
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      font-weight: 600;
+      display: none;
+    }
+
+    .alert-danger {
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    .alert-warning {
+      background: #fff7ed;
+      color: #9a3412;
+      border: 1px solid #fdba74;
+    }
+
+    .category-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .category-item {
+      display: grid;
+      grid-template-columns: 1.3fr 1fr 1fr 1fr;
+      gap: 10px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #fafafa;
+    }
+
+    .category-name {
+      font-weight: 700;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .chart-wrap {
+      position: relative;
+      height: 360px;
+    }
+
+    .empty-state {
+      color: var(--muted);
+      text-align: center;
+      padding: 20px;
+      border: 1px dashed var(--border);
+      border-radius: 14px;
+      background: #fafafa;
+    }
+
+    .footer-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .summary,
+      .budget-form,
+      .expense-form {
+        grid-template-columns: 1fr;
+      }
+
+      .category-item {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Monthly Budget Tracker</h1>
+      <p>Set category budgets, add expenses, track spending visually, and get warned when you go over budget.</p>
+    </div>
+
+    <div class="card" style="margin-bottom: 20px;">
+      <h2>Settings</h2>
+      <div class="budget-form">
+        <select id="currencySelect">
+          <option value="USD">USD ($)</option>
+          <option value="SGD">SGD (S$)</option>
+          <option value="TWD">TWD (NT$)</option>
+          <option value="EUR">EUR (€)</option>
+          <option value="GBP">GBP (£)</option>
+          <option value="JPY">JPY (¥)</option>
+          <option value="CNY">CNY (¥)</option>
+          <option value="HKD">HKD (HK$)</option>
+        </select>
+        <select id="categoryPreset">
+          <option value="">Choose a common category</option>
+          <option value="Food">Food</option>
+          <option value="Transport">Transport</option>
+          <option value="Rent">Rent</option>
+          <option value="Utilities">Utilities</option>
+          <option value="Groceries">Groceries</option>
+          <option value="Entertainment">Entertainment</option>
+          <option value="Shopping">Shopping</option>
+          <option value="Healthcare">Healthcare</option>
+          <option value="Education">Education</option>
+          <option value="Subscriptions">Subscriptions</option>
+          <option value="Travel">Travel</option>
+          <option value="Savings">Savings</option>
+          <option value="Miscellaneous">Miscellaneous</option>
+        </select>
+        <div></div>
+        <div></div>
+      </div>
+    </div>
+
+    <div class="summary">
+      <div class="summary-box">
+        <div class="label">Total Budget</div>
+        <div class="value" id="totalBudget">$0.00</div>
+      </div>
+      <div class="summary-box">
+        <div class="label">Total Spent</div>
+        <div class="value" id="totalSpent">$0.00</div>
+      </div>
+      <div class="summary-box">
+        <div class="label">Remaining</div>
+        <div class="value success" id="remainingBudget">$0.00</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>Budgets by Category</h2>
+        <div class="budget-form">
+          <input id="categoryName" type="text" placeholder="Category name" />
+          <input id="categoryBudget" type="number" min="0" step="0.01" placeholder="Budget amount" />
+          <button class="btn-primary" id="addCategoryBtn">Add / Update Category</button>
+          <button class="btn-secondary" id="resetBudgetsBtn" type="button">Reset All Data</button>
+        </div>
+
+        <div id="globalAlert" class="alert alert-danger"></div>
+
+        <div id="categoryList" class="category-list"></div>
+      </div>
+
+      <div class="card">
+        <h2>Expense Breakdown</h2>
+        <div class="chart-wrap">
+          <canvas id="expenseChart"></canvas>
+        </div>
+        <div id="chartEmpty" class="empty-state" style="display:none; margin-top: 14px;">
+          Add some expenses to see the pie chart.
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 20px;">
+      <h2>Add Expense</h2>
+      <div id="categoryWarning" class="alert alert-warning"></div>
+      <div class="expense-form">
+        <input id="expenseDate" type="date" />
+        <select id="expenseCategory"></select>
+        <input id="expenseDescription" type="text" placeholder="Description" />
+        <input id="expenseAmount" type="number" min="0" step="0.01" placeholder="Expense amount" />
+      </div>
+      <div class="footer-actions">
+        <button class="btn-primary" id="addExpenseBtn">Add Expense</button>
+      </div>
+
+      <h2 style="margin-top: 26px;">Expense History</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Category</th>
+              <th>Description</th>
+              <th>Amount</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="expenseTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const storageKey = 'monthlyBudgetTrackerData';
+
+    const state = {
+      currency: 'USD',
+      categories: {},
+      expenses: []
+    };
+
+    const els = {
+      categoryName: document.getElementById('categoryName'),
+      categoryBudget: document.getElementById('categoryBudget'),
+      addCategoryBtn: document.getElementById('addCategoryBtn'),
+      resetBudgetsBtn: document.getElementById('resetBudgetsBtn'),
+      categoryList: document.getElementById('categoryList'),
+      expenseDate: document.getElementById('expenseDate'),
+      expenseCategory: document.getElementById('expenseCategory'),
+      expenseDescription: document.getElementById('expenseDescription'),
+      expenseAmount: document.getElementById('expenseAmount'),
+      currencySelect: document.getElementById('currencySelect'),
+      categoryPreset: document.getElementById('categoryPreset'),
+      addExpenseBtn: document.getElementById('addExpenseBtn'),
+      expenseTableBody: document.getElementById('expenseTableBody'),
+      totalBudget: document.getElementById('totalBudget'),
+      totalSpent: document.getElementById('totalSpent'),
+      remainingBudget: document.getElementById('remainingBudget'),
+      globalAlert: document.getElementById('globalAlert'),
+      categoryWarning: document.getElementById('categoryWarning'),
+      chartEmpty: document.getElementById('chartEmpty')
+    };
+
+    let expenseChart;
+
+    function formatCurrency(value) {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: state.currency || 'USD'
+      }).format(Number(value) || 0);
+    }
+
+    function saveState() {
+      localStorage.setItem(storageKey, JSON.stringify(state));
+    }
+
+    function loadState() {
+      const raw = localStorage.getItem(storageKey);
+      if (!raw) return;
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed.currency) {
+          state.currency = parsed.currency;
+        }
+        if (parsed.categories && typeof parsed.categories === 'object') {
+          state.categories = parsed.categories;
+        }
+        if (Array.isArray(parsed.expenses)) {
+          state.expenses = parsed.expenses;
+        }
+      } catch (error) {
+        console.error('Failed to parse saved data:', error);
+      }
+    }
+
+    function getCategorySpent(category) {
+      return state.expenses
+        .filter(exp => exp.category === category)
+        .reduce((sum, exp) => sum + Number(exp.amount), 0);
+    }
+
+    function getTotalBudget() {
+      return Object.values(state.categories).reduce((sum, amount) => sum + Number(amount), 0);
+    }
+
+    function getTotalSpent() {
+      return state.expenses.reduce((sum, exp) => sum + Number(exp.amount), 0);
+    }
+
+    function refreshCategoryOptions() {
+      els.currencySelect.value = state.currency || 'USD';
+      const categories = Object.keys(state.categories);
+      els.expenseCategory.innerHTML = '';
+
+      if (categories.length === 0) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'Add a category first';
+        els.expenseCategory.appendChild(option);
+        els.expenseCategory.disabled = true;
+        return;
+      }
+
+      els.expenseCategory.disabled = false;
+      categories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        option.textContent = category;
+        els.expenseCategory.appendChild(option);
+      });
+    }
+
+    function renderCategories() {
+      const categories = Object.keys(state.categories);
+      els.categoryList.innerHTML = '';
+
+      if (categories.length === 0) {
+        els.categoryList.innerHTML = '<div class="empty-state">No categories yet. Add one above to start budgeting.</div>';
+        return;
+      }
+
+      categories.forEach(category => {
+        const budget = Number(state.categories[category]);
+        const spent = getCategorySpent(category);
+        const remaining = budget - spent;
+        const isOver = remaining < 0;
+
+        const row = document.createElement('div');
+        row.className = 'category-item';
+        row.innerHTML = `
+          <div>
+            <div class="category-name">${escapeHtml(category)}</div>
+            <div class="muted">${isOver ? 'Over budget' : 'Within budget'}</div>
+          </div>
+          <div><strong>Budget:</strong> ${formatCurrency(budget)}</div>
+          <div><strong>Spent:</strong> ${formatCurrency(spent)}</div>
+          <div class="${isOver ? 'danger' : 'success'}"><strong>Remaining:</strong> ${formatCurrency(remaining)}</div>
+        `;
+        els.categoryList.appendChild(row);
+      });
+    }
+
+    function renderExpenses() {
+      els.expenseTableBody.innerHTML = '';
+
+      if (state.expenses.length === 0) {
+        els.expenseTableBody.innerHTML = '<tr><td colspan="5" class="muted">No expenses added yet.</td></tr>';
+        return;
+      }
+
+      state.expenses
+        .slice()
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .forEach(expense => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${escapeHtml(expense.date)}</td>
+            <td>${escapeHtml(expense.category)}</td>
+            <td>${escapeHtml(expense.description || '-')}</td>
+            <td>${formatCurrency(expense.amount)}</td>
+            <td><button class="btn-danger" data-id="${expense.id}">Delete</button></td>
+          `;
+          els.expenseTableBody.appendChild(row);
+        });
+
+      els.expenseTableBody.querySelectorAll('button[data-id]').forEach(button => {
+        button.addEventListener('click', () => {
+          const id = button.getAttribute('data-id');
+          state.expenses = state.expenses.filter(exp => exp.id !== id);
+          saveState();
+          renderAll();
+        });
+      });
+    }
+
+    function renderSummary() {
+      const totalBudget = getTotalBudget();
+      const totalSpent = getTotalSpent();
+      const remaining = totalBudget - totalSpent;
+
+      els.totalBudget.textContent = formatCurrency(totalBudget);
+      els.totalSpent.textContent = formatCurrency(totalSpent);
+      els.remainingBudget.textContent = formatCurrency(remaining);
+      els.remainingBudget.className = 'value ' + (remaining < 0 ? 'danger' : 'success');
+
+      if (remaining < 0) {
+        els.globalAlert.style.display = 'block';
+        els.globalAlert.textContent = `Warning: You are ${formatCurrency(Math.abs(remaining))} over your total monthly budget.`;
+      } else {
+        els.globalAlert.style.display = 'none';
+        els.globalAlert.textContent = '';
+      }
+    }
+
+    function renderWarnings() {
+      const category = els.expenseCategory.value;
+      if (!category || !(category in state.categories)) {
+        els.categoryWarning.style.display = 'none';
+        return;
+      }
+
+      const spent = getCategorySpent(category);
+      const budget = Number(state.categories[category]);
+      if (spent > budget) {
+        els.categoryWarning.style.display = 'block';
+        els.categoryWarning.textContent = `${category} is currently ${formatCurrency(spent - budget)} over budget.`;
+      } else if (budget > 0 && spent / budget >= 0.9) {
+        els.categoryWarning.style.display = 'block';
+        els.categoryWarning.textContent = `${category} has used ${Math.round((spent / budget) * 100)}% of its budget.`;
+      } else {
+        els.categoryWarning.style.display = 'none';
+      }
+    }
+
+    function renderChart() {
+      const categories = Object.keys(state.categories);
+      const spentData = categories.map(category => getCategorySpent(category));
+      const hasExpenses = spentData.some(value => value > 0);
+
+      els.chartEmpty.style.display = hasExpenses ? 'none' : 'block';
+
+      if (expenseChart) {
+        expenseChart.destroy();
+      }
+
+      const ctx = document.getElementById('expenseChart').getContext('2d');
+      expenseChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: categories,
+          datasets: [{
+            data: spentData,
+            backgroundColor: [
+              '#2563eb', '#16a34a', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16', '#f97316', '#14b8a6'
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom'
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const value = context.parsed || 0;
+                  return `${context.label}: ${formatCurrency(value)}`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function renderAll() {
+      refreshCategoryOptions();
+      renderCategories();
+      renderExpenses();
+      renderSummary();
+      renderWarnings();
+      renderChart();
+    }
+
+    function addOrUpdateCategory() {
+      const preset = els.categoryPreset.value.trim();
+      const manualName = els.categoryName.value.trim();
+      const name = manualName || preset;
+      const budget = Number(els.categoryBudget.value);
+
+      if (!name) {
+        alert('Please enter a category name.');
+        return;
+      }
+
+      if (Number.isNaN(budget) || budget < 0) {
+        alert('Please enter a valid budget amount.');
+        return;
+      }
+
+      state.categories[name] = budget;
+      els.categoryName.value = '';
+      els.categoryBudget.value = '';
+      els.categoryPreset.value = '';
+      saveState();
+      renderAll();
+    }
+
+    function addExpense() {
+      const date = els.expenseDate.value;
+      const category = els.expenseCategory.value;
+      const description = els.expenseDescription.value.trim();
+      const amount = Number(els.expenseAmount.value);
+
+      if (!date) {
+        alert('Please select a date.');
+        return;
+      }
+
+      if (!category) {
+        alert('Please choose a category.');
+        return;
+      }
+
+      if (Number.isNaN(amount) || amount <= 0) {
+        alert('Please enter a valid expense amount.');
+        return;
+      }
+
+      state.expenses.push({
+        id: crypto.randomUUID(),
+        date,
+        category,
+        description,
+        amount
+      });
+
+      els.expenseDescription.value = '';
+      els.expenseAmount.value = '';
+      saveState();
+      renderAll();
+    }
+
+    function updateCurrency() {
+      state.currency = els.currencySelect.value || 'USD';
+      saveState();
+      renderAll();
+    }
+
+    function applyPresetCategory() {
+      if (els.categoryPreset.value) {
+        els.categoryName.value = els.categoryPreset.value;
+      }
+    }
+
+    function resetAllData() {
+      const confirmed = confirm('This will remove all budgets and expenses. Continue?');
+      if (!confirmed) return;
+      state.categories = {};
+      state.expenses = [];
+      saveState();
+      renderAll();
+    }
+
+    function init() {
+      loadState();
+      els.expenseDate.value = new Date().toISOString().split('T')[0];
+      els.addCategoryBtn.addEventListener('click', addOrUpdateCategory);
+      els.addExpenseBtn.addEventListener('click', addExpense);
+      els.resetBudgetsBtn.addEventListener('click', resetAllData);
+      els.expenseCategory.addEventListener('change', renderWarnings);
+      els.currencySelect.addEventListener('change', updateCurrency);
+      els.categoryPreset.addEventListener('change', applyPresetCategory);
+      renderAll();
+    }
+
+    init();
+  </script>
+</body>
+</html>
