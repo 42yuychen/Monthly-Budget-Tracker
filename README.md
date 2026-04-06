@@ -1,4 +1,4 @@
-# Monthly Budget Tracker 2
+# Monthly Budget Tracker 
 
 ## English
 
