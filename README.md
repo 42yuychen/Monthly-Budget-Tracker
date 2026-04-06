@@ -3,7 +3,7 @@
 ## English
 
 ### Overview
-`Monthly Budget Tracker2.html` is an enhanced version of the monthly budget tracker with currency switching and built-in category presets.
+`Monthly Budget Tracker.html` is an enhanced version of the monthly budget tracker with currency switching and built-in category presets.
 
 ### Features
 - Add or update budget categories with custom amounts
@@ -18,7 +18,7 @@
 - Save data automatically with `localStorage`
 
 ### How to Use
-1. Open `Monthly Budget Tracker2.html` in a web browser.
+1. Open `Monthly Budget Tracker.html` in a web browser.
 2. Choose your preferred currency in the settings area.
 3. Add a category manually or select one from the preset list.
 4. Enter a budget amount and click `Add / Update Category`.
@@ -34,7 +34,7 @@
 ## 繁體中文
 
 ### 專案介紹
-`Monthly Budget Tracker2.html` 是加強版的每月預算追蹤工具，額外提供幣別切換與常用分類預設選項。
+`Monthly Budget Tracker.html` 是加強版的每月預算追蹤工具，額外提供幣別切換與常用分類預設選項。
 
 ### 功能特色
 - 新增或更新自訂分類預算
@@ -49,7 +49,7 @@
 - 透過 `localStorage` 自動儲存資料
 
 ### 使用方式
-1. 在瀏覽器中開啟 `Monthly Budget Tracker2.html`。
+1. 在瀏覽器中開啟 `Monthly Budget Tracker.html`。
 2. 先在設定區選擇想要使用的幣別。
 3. 可手動輸入分類，或從預設分類清單中挑選。
 4. 輸入預算金額後，按下 `Add / Update Category`。
